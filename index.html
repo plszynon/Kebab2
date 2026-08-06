@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="pl"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kebab Klikacz 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Dirt&family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1a0a00;
+    --panel: #2b1200;
+    --panel2: #3d1a00;
+    --accent: #ff6b00;
+    --accent2: #ffbe00;
+    --red: #e03c00;
+    --text: #ffe8c0;
+    --muted: #a07050;
+    --green: #6fcf45;
+    --border: #5a2e00;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Rubik', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, #3d1500 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, #2a0d00 0%, transparent 60%);
+  }
+
+  /* ===== TOPBAR ===== */
+  .topbar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px 0;
+    max-width: 1000px;
+  }
+
+  .hamburger {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    color: var(--accent2);
+    font-size: 1.4rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .15s, border-color .15s;
+  }
+  .hamburger:hover { background: var(--panel2); border-color: var(--accent); }
+
+  .title-wrap { text-align: center; flex: 1; }
+
+  h1 {
+    font-family: 'Rubik Dirt', cursive;
+    font-size: clamp(1.6rem, 5vw, 3rem);
+    color: var(--accent2);
+    text-shadow: 0 0 30px #ff6b0088, 0 4px 0 #7a3000;
+    letter-spacing: 2px;
+    margin: 4px 0 0;
+    text-align: center;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: .85rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .user-badge {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 10px;
+    font-size: .78rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .user-badge button {
+    background: var(--accent);
+    border: none;
+    color: #1a0a00;
+    font-weight: 800;
+    font-size: .72rem;
+    padding: 5px 9px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .user-badge button.logout { background: var(--red); color: #fff; }
+
+  /* ===== SIDE MENU ===== */
+  .menu-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s;
+    z-index: 1000;
+  }
+  .menu-overlay.show { opacity: 1; pointer-events: auto; }
+
+  .side-menu {
+    position: fixed; top: 0; left: -300px;
+    width: 280px; height: 100%;
+    background: var(--panel);
+    border-right: 2px solid var(--border);
+    z-index: 1001;
+    transition: left .3s cubic-bezier(.34,1.1,.64,1);
+    display: flex; flex-direction: column;
+    padding: 16px 12px;
+    gap: 6px;
+    overflow-y: auto;
+  }
+  .side-menu.open { left: 0; box-shadow: 6px 0 30px #0009; }
+
+  .side-menu-header {
+    font-family: 'Rubik Dirt', cursive;
+    color: var(--accent2);
+    font-size: 1.3rem;
+    padding: 6px 8px 14px;
+    letter-spacing: 1px;
+  }
+
+  .menu-item {
+    background: transparent;
+    border: 2px solid transparent;
+    color: var(--text);
+    text-align: left;
+    font-family: 'Rubik', sans-serif;
+    font-weight: 700;
+    font-size: .92rem;
+    padding: 11px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .menu-item:hover { background: var(--panel2); border-color: var(--border); }
+  .menu-item.active-item { border-color: var(--accent); background: var(--panel2); color: var(--accent2); }
+  .menu-item.danger { color: var(--red); }
+  .menu-item.dev { color: #7ad1ff; }
+  .menu-sep { height: 1px; background: var(--border); margin: 6px 4px; }
+
+  /* ===== VIEWS ===== */
+  .view { display: none; width: 100%; }
+  .view.active { display: block; }
+
+  .main {
+    display: flex;
+    gap: 18px;
+    width: 100%;
+    max-width: 1000px;
+    padding: 10px 12px 30px;
+    align-items: flex-start;
+    margin: 0 auto;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 900px;
+    margin: 10px auto 40px;
+    padding: 0 14px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .page h2 {
+    font-family: 'Rubik Dirt', cursive;
+    color: var(--accent2);
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+  .page p.hint { color: var(--muted); font-size: .85rem; margin-bottom: 10px; line-height: 1.5; }
+
+  /* LEFT - clicker */
+  .clicker-col {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    min-width: 220px;
+  }
+
+  .counter-box {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 28px;
+    text-align: center;
+    width: 100%;
+    box-shadow: 0 4px 24px #0008;
+  }
+
+  .counter-label {
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--muted);
+  }
+
+  .counter-val {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--accent2);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .counter-ps {
+    font-size: .85rem;
+    color: var(--accent);
+    margin-top: 2px;
+  }
+
+  /* kebab button */
+  .kebab-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .kebab-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 7rem;
+    line-height: 1;
+    filter: drop-shadow(0 0 18px #ff6b0066);
+    transition: transform .08s ease, filter .1s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    display: block;
+  }
+
+  .kebab-btn:active {
+    transform: scale(0.88) rotate(-5deg);
+    filter: drop-shadow(0 0 32px #ffbe00cc);
+  }
+
+  .kebab-btn.pop {
+    animation: kpop .15s ease-out;
+  }
+
+  @keyframes kpop {
+    0%  { transform: scale(1); }
+    40% { transform: scale(1.18) rotate(4deg); }
+    100%{ transform: scale(1); }
+  }
+
+  .glow-ring {
+    position: absolute;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    opacity: 0;
+    pointer-events: none;
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+  @keyframes glow-pulse {
+    0%,100% { transform: scale(.85); opacity: 0; }
+    50%      { transform: scale(1.1); opacity: .35; }
+  }
+
+  /* floaty text */
+  .floaty {
+    position: fixed;
+    pointer-events: none;
+    font-weight: 800;
+    font-size: 1.3rem;
+    color: var(--accent2);
+    text-shadow: 0 2px 8px #0008;
+    animation: floaty-up .9s ease forwards;
+    z-index: 999;
+  }
+  @keyframes floaty-up {
+    0%   { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-80px) scale(.6); opacity: 0; }
+  }
+
+  /* upgrades */
+  .upgrades-col {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .section-title {
+    font-family: 'Rubik Dirt', cursive;
+    font-size: 1.1rem;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 6px;
+    margin-bottom: 2px;
+  }
+
+  .upgrade-item {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .1s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .upgrade-item:hover:not(.locked) {
+    background: var(--panel2);
+    border-color: var(--accent);
+    transform: translateX(3px);
+  }
+
+  .upgrade-item.locked {
+    opacity: .45;
+    cursor: not-allowed;
+    filter: grayscale(.6);
+  }
+
+  .upgrade-item.bought {
+    border-color: var(--green);
+    background: #0d2200;
+  }
+
+  .upgrade-icon { font-size: 2rem; flex-shrink: 0; }
+
+  .upgrade-info { flex: 1; }
+  .upgrade-name { font-weight: 800; font-size: 1rem; }
+  .upgrade-desc { font-size: .78rem; color: var(--muted); margin-top: 1px; }
+
+  .upgrade-cost {
+    font-weight: 800;
+    font-size: .95rem;
+    color: var(--accent2);
+    white-space: nowrap;
+  }
+  .upgrade-cost.cant { color: var(--red); }
+
+  .upgrade-item.bought .upgrade-cost { color: var(--green); }
+
+  /* buildings */
+  .buildings-col {
+    flex: 0 0 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .building-item {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 9px 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .building-item:hover:not(.locked) {
+    background: var(--panel2);
+    border-color: var(--accent);
+  }
+  .building-item.locked { opacity: .4; cursor: not-allowed; }
+
+  .building-icon { font-size: 1.6rem; flex-shrink: 0; }
+  .building-info { flex: 1; min-width: 0; }
+  .building-name { font-weight: 700; font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .building-owned { font-size: .72rem; color: var(--accent); }
+  .building-cost  { font-size: .8rem; font-weight: 700; color: var(--accent2); white-space: nowrap; }
+  .building-cost.cant { color: var(--red); }
+
+  /* milestone toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #3d1a00;
+    border: 2px solid var(--accent2);
+    border-radius: 14px;
+    padding: 12px 24px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--accent2);
+    box-shadow: 0 4px 24px #0009;
+    z-index: 9999;
+    transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+    pointer-events: none;
+    text-align: center;
+    white-space: nowrap;
+    max-width: 90vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* milestone bar */
+  .milestone-bar {
+    width: 100%;
+    max-width: 1000px;
+    padding: 0 12px 6px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 0 auto;
+  }
+  .milestone-badge {
+    background: var(--panel);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--muted);
+    transition: color .3s, border-color .3s;
+  }
+  .milestone-badge.done { color: var(--accent2); border-color: var(--accent2); }
+
+  /* save bar */
+  .save-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+  .save-btn {
+    background: var(--panel2);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Rubik', sans-serif;
+    font-weight: 700;
+    font-size: .85rem;
+    padding: 7px 18px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    letter-spacing: 1px;
+  }
+  .save-btn:hover { background: #5a2e00; border-color: var(--accent); }
+  .save-btn.danger { border-color: var(--red); color: var(--red); }
+  .save-btn.danger:hover { background: #3a0000; }
+  .save-btn.dl { border-color: var(--accent2); color: var(--accent2); }
+  .save-btn.dl:hover { background: #3a2500; }
+
+  /* ===== TABLES ===== */
+  table.rank-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  table.rank-table th { text-align: left; color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: 1px; padding: 6px 8px; border-bottom: 2px solid var(--border); }
+  table.rank-table td { padding: 8px; border-bottom: 1px solid var(--border); }
+  table.rank-table tr.me { background: #3d1a00; }
+  table.rank-table tr.me td:nth-child(2) { color: var(--accent2); font-weight: 800; }
+
+  /* ===== FORMS ===== */
+  .form-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .form-row label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .form-row input, .form-row select {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 9px 12px;
+    font-family: 'Rubik', sans-serif;
+    font-size: .95rem;
+  }
+  .form-row input:focus, .form-row select:focus { outline: none; border-color: var(--accent); }
+  .btn-primary {
+    background: var(--accent);
+    border: none;
+    color: #1a0a00;
+    font-weight: 800;
+    font-size: .9rem;
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: .5px;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary {
+    background: transparent;
+    border: 2px solid var(--border);
+    color: var(--text);
+    font-weight: 700;
+    font-size: .85rem;
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .btn-secondary:hover { border-color: var(--accent); }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+
+  /* ===== MODALS ===== */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.65);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s;
+    z-index: 2000;
+    padding: 16px;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: auto; }
+  .modal {
+    background: var(--panel);
+    border: 2px solid var(--accent);
+    border-radius: 18px;
+    padding: 22px;
+    width: 100%;
+    max-width: 380px;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 50px #000c;
+  }
+  .modal.wide { max-width: 640px; }
+  .modal h3 { font-family: 'Rubik Dirt', cursive; color: var(--accent2); font-size: 1.2rem; margin-bottom: 14px; letter-spacing: 1px; }
+  .modal .close-x { float: right; background: none; border: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; line-height: 1; }
+  .modal .close-x:hover { color: var(--red); }
+  .modal p.small { font-size: .76rem; color: var(--muted); line-height: 1.5; margin-top: 8px; }
+  .modal textarea {
+    width: 100%; min-height: 120px;
+    background: var(--bg); border: 2px solid var(--border); border-radius: 8px;
+    color: var(--green); font-family: monospace; font-size: .75rem; padding: 8px;
+  }
+  .tab-toggle { display: flex; gap: 6px; margin-bottom: 14px; }
+  .tab-toggle button {
+    flex: 1; background: var(--bg); border: 2px solid var(--border); color: var(--muted);
+    padding: 8px; border-radius: 8px; font-weight: 700; font-size: .82rem; cursor: pointer;
+  }
+  .tab-toggle button.active { border-color: var(--accent); color: var(--accent2); background: var(--panel2); }
+
+  /* ===== COOP ===== */
+  .coop-players { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+  .coop-player {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--panel2); border: 2px solid var(--border); border-radius: 10px; padding: 10px 12px;
+  }
+  .coop-player .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+  .coop-slot-empty {
+    border: 2px dashed var(--border); border-radius: 10px; padding: 10px 12px;
+    color: var(--muted); font-size: .85rem; text-align: center;
+  }
+  .coop-code {
+    font-family: monospace; font-size: 1.6rem; letter-spacing: 6px; color: var(--accent2);
+    background: var(--bg); border: 2px solid var(--accent); border-radius: 12px;
+    padding: 10px 16px; text-align: center; margin: 10px 0; font-weight: 800;
+  }
+
+  /* ===== STATS / ACHIEVEMENTS ===== */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 10px; margin-bottom: 10px; }
+  .stat-box { background: var(--panel2); border: 2px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
+  .stat-box .val { font-size: 1.4rem; font-weight: 800; color: var(--accent2); }
+  .stat-box .lbl { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .ach-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--panel2); border: 2px solid var(--border); border-radius: 20px; padding: 6px 12px; font-size: .8rem; margin: 3px; }
+  .ach-badge.done { border-color: var(--green); color: var(--green); }
+  .ach-badge.pending { color: var(--muted); }
+
+  /* ===== SETTINGS ===== */
+  .theme-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .theme-btn {
+    width: 60px; height: 60px; border-radius: 12px; border: 3px solid var(--border);
+    cursor: pointer; position: relative;
+  }
+  .theme-btn.active-theme { border-color: #fff; }
+  .switch-row { display: flex; align-items: center; justify-content: space-between; background: var(--panel2); border: 2px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
+
+  /* ===== CHANGELOG ===== */
+  .changelog-entry { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .changelog-entry:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .changelog-version { font-family: 'Rubik Dirt', cursive; color: var(--accent2); font-size: 1rem; margin-bottom: 8px; letter-spacing: 1px; }
+  .changelog-entry ul { padding-left: 18px; }
+  .changelog-entry li { font-size: .88rem; margin-bottom: 6px; line-height: 1.4; }
+
+  /* ===== EVENTS: golden kebab / rain / confetti / buff badge ===== */
+  .golden-kebab {
+    position: fixed;
+    font-size: 3rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 1500;
+    background: none;
+    border: none;
+    user-select: none;
+    filter: drop-shadow(0 0 10px #ffd700) drop-shadow(0 0 22px #ffbe0088);
+    animation: golden-appear .35s ease, golden-float 1.8s ease-in-out infinite .35s;
+  }
+  @keyframes golden-appear { from { transform: scale(0) rotate(-30deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+  @keyframes golden-float { 0%,100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-12px) rotate(6deg); } }
+
+  .falling-kebab {
+    position: fixed;
+    font-size: 2rem;
+    cursor: pointer;
+    z-index: 1450;
+    background: none;
+    border: none;
+    user-select: none;
+    filter: drop-shadow(0 0 8px #ff6b00aa);
+    animation-name: fall-down;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
+  @keyframes fall-down { from { transform: translateY(-40px) rotate(0deg); } to { transform: translateY(105vh) rotate(360deg); } }
+
+  .confetti-particle {
+    position: fixed;
+    pointer-events: none;
+    font-size: 1.2rem;
+    z-index: 1600;
+    transform: translate(0,0) scale(1);
+    opacity: 1;
+    animation: confetti-burst .85s ease-out forwards;
+  }
+  @keyframes confetti-burst { to { transform: translate(var(--dx), var(--dy)) scale(.3) rotate(180deg); opacity: 0; } }
+
+  .buff-badge {
+    position: fixed;
+    top: 68px;
+    right: 14px;
+    background: var(--panel);
+    border: 2px solid var(--accent2);
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--accent2);
+    z-index: 1400;
+    display: none;
+    box-shadow: 0 4px 20px #0008;
+    max-width: 80vw;
+  }
+  .buff-badge.show { display: block; }
+
+  /* responsive */
+  @media (max-width: 700px) {
+    .main { flex-direction: column; align-items: center; }
+    .buildings-col { flex: unset; width: 100%; flex-direction: row; flex-wrap: wrap; }
+    .building-item { flex: 0 0 calc(50% - 4px); }
+    .upgrades-col { width: 100%; }
+    .topbar { flex-wrap: wrap; }
+    .user-badge { order: 3; margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="hamburger" id="hamburgerBtn" title="Menu">☰</button>
+  <div class="title-wrap">
+    <h1>🌯 KEBAB KLIKACZ 2</h1>
+    <p class="subtitle">Nakarm cały świat — teraz z rankingiem i co-op</p>
+  </div>
+  <div class="user-badge" id="userBadge"></div>
+</div>
+
+<div class="save-bar">
+  <button class="save-btn" onclick="saveGame()">💾 Zapisz</button>
+  <button class="save-btn" onclick="loadGame()">📂 Wczytaj</button>
+  <button class="save-btn danger" onclick="resetGame()">🗑️ Reset</button>
+</div>
+<div class="milestone-bar" id="milestoneBar"></div>
+
+<!-- ================= MENU ================= -->
+<div class="menu-overlay" id="menuOverlay"></div>
+<nav class="side-menu" id="sideMenu">
+  <div class="side-menu-header">🌯 MENU</div>
+  <button class="menu-item" data-view="game">🎮 Gra</button>
+  <button class="menu-item" data-view="ranking">🏆 Ranking</button>
+  <button class="menu-item" data-view="coop">👥 Tryb Co-op</button>
+  <button class="menu-item" data-view="prestige">👑 Prestiż</button>
+  <button class="menu-item" data-view="stats">📊 Statystyki</button>
+  <button class="menu-item" data-view="settings">⚙️ Ustawienia</button>
+  <button class="menu-item" data-view="changelog">📜 Log zmian</button>
+  <div class="menu-sep"></div>
+  <button class="menu-item" onclick="saveGame()">💾 Zapisz grę</button>
+  <button class="menu-item" onclick="loadGame()">📂 Wczytaj grę</button>
+  <button class="menu-item danger" onclick="resetGame()">🗑️ Resetuj postęp</button>
+  <div class="menu-sep"></div>
+  <button class="menu-item dev" id="devMenuBtn">🔧 Dev Panel</button>
+</nav>
+
+<!-- ================= VIEW: GAME ================= -->
+<main id="viewGame" class="view active">
+  <div class="main">
+    <!-- LEFT -->
+    <div class="clicker-col">
+      <div class="counter-box">
+        <div class="counter-label">Kebaby</div>
+        <div class="counter-val" id="counterVal">0</div>
+        <div class="counter-ps" id="counterPS">0 kebabów/s</div>
+      </div>
+      <div class="kebab-wrap">
+        <div class="glow-ring"></div>
+        <button class="kebab-btn" id="kebabBtn" title="Kliknij!">🌯</button>
+      </div>
+      <div class="counter-box" style="font-size:.82rem; color:var(--muted); padding:8px 16px;">
+        Łącznie zrobiono: <strong id="totalMade" style="color:var(--accent2)">0</strong>
+      </div>
+    </div>
+
+    <!-- UPGRADES -->
+    <div class="upgrades-col">
+      <div class="section-title">⚡ Ulepszenia</div>
+      <div id="upgradeList"></div>
+    </div>
+
+    <!-- BUILDINGS -->
+    <div class="buildings-col">
+      <div class="section-title">🏗️ Budynki</div>
+      <div id="buildingList"></div>
+    </div>
+  </div>
+</main>
+
+<!-- ================= VIEW: RANKING ================= -->
+<main id="viewRanking" class="view">
+  <div class="page">
+    <h2>🏆 Ranking</h2>
+    <div class="card">
+      <p class="hint">Ranking jest lokalny dla tej przeglądarki — konta i wyniki zapisują się na tym urządzeniu (nie ma serwera online), więc porówna wyniki tylko między kontami zakładanymi tutaj. Zaloguj się, żeby zapisywać swój najlepszy wynik.</p>
+      <div id="rankingLoginPrompt" style="display:none;">
+        <button class="btn-primary" onclick="openLoginModal()">🔑 Zaloguj się, aby dołączyć do rankingu</button>
+      </div>
+      <table class="rank-table">
+        <thead><tr><th>#</th><th>Gracz</th><th>Suma kebabów</th><th>Prestiż</th></tr></thead>
+        <tbody id="rankingBody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- ================= VIEW: COOP ================= -->
+<main id="viewCoop" class="view">
+  <div class="page">
+    <h2>👥 Tryb Co-op (max 3 graczy)</h2>
+    <div class="card">
+      <p class="hint">Co-op działa przez lokalne łącze przeglądarki (BroadcastChannel) — czyli synchronizuje graczy między kartami/oknami <strong>tej samej przeglądarki na tym urządzeniu</strong>. To nie jest gra sieciowa przez internet (do tego potrzebny byłby serwer), ale świetnie nadaje się do testów lub grania na tym samym komputerze/w kilku kartach.</p>
+      <div id="coopNoLobby">
+        <div class="btn-row">
+          <button class="btn-primary" onclick="coopCreateLobby()">➕ Utwórz lobby</button>
+        </div>
+        <div class="form-row" style="margin-top:14px;">
+          <label>Dołącz kodem lobby</label>
+          <input type="text" id="coopCodeInput" maxlength="6" placeholder="np. AB12C" style="text-transform:uppercase;">
+        </div>
+        <button class="btn-secondary" onclick="coopJoinLobby(document.getElementById('coopCodeInput').value)">Dołącz</button>
+      </div>
+      <div id="coopInLobby" style="display:none;">
+        <div class="coop-code" id="coopCodeDisplay">------</div>
+        <div class="coop-players" id="coopPlayersList"></div>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="val" id="coopSharedVal">0</div><div class="lbl">Kebaby drużyny (sesja)</div></div>
+          <div class="stat-box"><div class="val" id="coopBonusVal">+0%</div><div class="lbl">Bonus produkcji/s</div></div>
+        </div>
+        <button class="btn-secondary" onclick="leaveCoop()" style="border-color:var(--red); color:var(--red);">🚪 Opuść lobby</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ================= VIEW: PRESTIGE ================= -->
+<main id="viewPrestige" class="view">
+  <div class="page">
+    <h2>👑 Prestiż</h2>
+    <div class="card">
+      <p class="hint">Odrodzenie resetuje Twoje kebaby, ulepszenia i budynki, ale w zamian dajesz sobie trwały bonus produkcji na zawsze. Potrzebujesz min. 1 000 000 wyprodukowanych kebabów, żeby zdobyć choć 1 punkt.</p>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="val" id="prestigeCurrent">0</div><div class="lbl">Punkty Prestiżu</div></div>
+        <div class="stat-box"><div class="val" id="prestigeMult">+0%</div><div class="lbl">Bonus produkcji</div></div>
+        <div class="stat-box"><div class="val" id="prestigePotential">0</div><div class="lbl">Możliwe do zdobycia teraz</div></div>
+      </div>
+      <button class="btn-primary" onclick="doPrestige()">🔁 Odrodź się</button>
+    </div>
+  </div>
+</main>
+
+<!-- ================= VIEW: STATS ================= -->
+<main id="viewStats" class="view">
+  <div class="page">
+    <h2>📊 Statystyki</h2>
+    <div class="card">
+      <div class="stat-grid" id="statGrid"></div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="border:none; margin-bottom:10px;">🏅 Osiągnięcia</div>
+      <div id="achList"></div>
+    </div>
+  </div>
+</main>
+
+<!-- ================= VIEW: SETTINGS ================= -->
+<main id="viewSettings" class="view">
+  <div class="page">
+    <h2>⚙️ Ustawienia</h2>
+
+    <div class="card">
+      <div class="section-title" style="border:none; margin-bottom:10px;">👤 Konto</div>
+      <div id="settingsAccountBox"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="border:none; margin-bottom:10px;">🎨 Motyw kolorystyczny</div>
+      <div class="theme-row">
+        <button class="theme-btn" data-theme="classic" style="background:linear-gradient(135deg,#ff6b00,#ffbe00);" title="Klasyczny"></button>
+        <button class="theme-btn" data-theme="matcha" style="background:linear-gradient(135deg,#4caf50,#b2ff59);" title="Matcha"></button>
+        <button class="theme-btn" data-theme="neon" style="background:linear-gradient(135deg,#a020f0,#ff2fd0);" title="Neon"></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="switch-row">
+        <span>🔊 Dźwięk kliknięć</span>
+        <input type="checkbox" id="soundToggle" style="width:20px; height:20px;">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="border:none; margin-bottom:10px;">💾 Zarządzanie danymi</div>
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="exportSave()">⬇️ Eksportuj zapis (JSON)</button>
+        <button class="btn-secondary" onclick="document.getElementById('importFileInput').click()">⬆️ Importuj zapis</button>
+        <input type="file" id="importFileInput" accept="application/json" style="display:none;">
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ================= VIEW: CHANGELOG ================= -->
+<main id="viewChangelog" class="view">
+  <div class="page">
+    <h2>📜 Log zmian</h2>
+    <div class="card">
+      <div class="changelog-entry">
+        <div class="changelog-version">v2.1</div>
+        <ul>
+          <li>✨ Nowość: <strong>Złoty Kebab</strong> — losowo pojawia się na ekranie, kliknij po natychmiastowy bonus, szał klikania ×7, boost produkcji ×3 albo deszcz kebabów do złapania</li>
+          <li>🎊 Efekty konfetti przy zdobyciu bonusu ze Złotego Kebaba</li>
+          <li>📜 Dodano ten log zmian</li>
+          <li>🗑️ Usunięto przycisk „Pobierz grę” z paska zapisu i menu</li>
+        </ul>
+      </div>
+      <div class="changelog-entry">
+        <div class="changelog-version">v2.0 — Kebab Klikacz 2</div>
+        <ul>
+          <li>🍔➡️🌯 Zmiana nazwy na Kebab Klikacz 2</li>
+          <li>☰ Wysuwane menu hamburger</li>
+          <li>🏆 Lokalny ranking graczy z logowaniem</li>
+          <li>👥 Tryb Co-op dla max 3 graczy (przez BroadcastChannel w tej samej przeglądarce)</li>
+          <li>👑 System Prestiżu / odrodzeń</li>
+          <li>🔧 Panel deweloperski chroniony hasłem (hasz SHA-256)</li>
+          <li>📊 Statystyki i osiągnięcia</li>
+          <li>⚙️ Ustawienia: motywy kolorystyczne, dźwięk, eksport/import zapisu</li>
+          <li>🌙 Zarobki offline po powrocie do gry</li>
+          <li>⚡🏭 6 nowych ulepszeń i 4 nowe budynki na późną grę</li>
+        </ul>
+      </div>
+      <div class="changelog-entry">
+        <div class="changelog-version">v1.0</div>
+        <ul>
+          <li>🌯 Pierwsza wersja: Kebab Klikacz — klikanie, ulepszenia, budynki, kamienie milowe, zapis lokalny</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="buff-badge" id="buffBadge"></div>
+<div class="toast" id="toast">💾 Gra zapisana!</div>
+
+<!-- ================= MODAL: LOGIN ================= -->
+<div class="modal-overlay" id="loginModalOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="closeLoginModal()">✕</button>
+    <h3>🔑 Konto lokalne</h3>
+    <div class="form-row">
+      <label>Nazwa użytkownika</label>
+      <input type="text" id="loginUsername" maxlength="20" placeholder="np. KebabMistrz">
+    </div>
+    <div class="form-row">
+      <label>Hasło</label>
+      <input type="password" id="loginPassword" placeholder="••••••••">
+    </div>
+    <button class="btn-primary" onclick="doLogin()" style="width:100%;">Zaloguj / Zarejestruj</button>
+    <p class="small">Jeśli konto o tej nazwie nie istnieje, zostanie utworzone automatycznie. Hasła są haszowane (SHA-256) i trzymane wyłącznie w pamięci tej przeglądarki — to lokalny system kont, nie prawdziwy serwer online.</p>
+  </div>
+</div>
+
+<!-- ================= MODAL: DEV PASSWORD ================= -->
+<div class="modal-overlay" id="devPasswordOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="closeDevPasswordModal()">✕</button>
+    <h3>🔧 Dev Panel</h3>
+    <div class="form-row">
+      <label>Hasło deweloperskie</label>
+      <input type="password" id="devPasswordInput" placeholder="••••••••">
+    </div>
+    <button class="btn-primary" onclick="checkDevPassword()" style="width:100%;">Odblokuj</button>
+  </div>
+</div>
+
+<!-- ================= MODAL: DEV PANEL ================= -->
+<div class="modal-overlay" id="devPanelOverlay">
+  <div class="modal wide">
+    <button class="close-x" onclick="closeDevPanel()">✕</button>
+    <h3>🔧 Panel Deweloperski</h3>
+
+    <div class="form-row">
+      <label>Ustaw kebaby</label>
+      <input type="number" id="devKebabsInput" placeholder="np. 1000000">
+    </div>
+    <button class="btn-secondary" onclick="devSetKebabs()">Ustaw kebaby</button>
+
+    <div class="form-row" style="margin-top:14px;">
+      <label>Ustaw siłę kliknięcia</label>
+      <input type="number" id="devClickInput" placeholder="np. 100">
+    </div>
+    <button class="btn-secondary" onclick="devSetClickPower()">Ustaw siłę kliknięcia</button>
+
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn-secondary" onclick="devAddMillion()">➕ +1 000 000 kebabów</button>
+      <button class="btn-secondary" onclick="devUnlockAll()">🔓 Odblokuj wszystko</button>
+      <button class="btn-secondary" onclick="devAddPrestige()">👑 +10 Prestiżu</button>
+      <button class="btn-secondary" id="devGodModeBtn" onclick="devToggleGod()">♾️ Tryb boga: OFF</button>
+      <button class="btn-secondary" onclick="devResetAchievements()">🔄 Reset osiągnięć</button>
+    </div>
+
+    <div class="form-row" style="margin-top:16px;">
+      <label>Surowy stan gry (JSON)</label>
+      <textarea id="devJsonView" readonly></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="devRefreshJson()">🔄 Odśwież widok</button>
+    </div>
+    <p class="small">Hasło panelu jest weryfikowane przez porównanie skrótu SHA-256 wpisanego tekstu z zapisanym skrótem — samo hasło nigdy nie jest trzymane w kodzie w formie jawnej.</p>
+  </div>
+</div>
+
+<!-- ================= MODAL: OFFLINE EARNINGS ================= -->
+<div class="modal-overlay" id="offlineModalOverlay">
+  <div class="modal">
+    <h3>🌙 Podczas Twojej nieobecności...</h3>
+    <p id="offlineText" style="font-size:1rem; line-height:1.6;"></p>
+    <button class="btn-primary" onclick="closeOfflineModal()" style="width:100%; margin-top:14px;">Super!</button>
+  </div>
+</div>
+
+<script>
+// ===================================================================
+// STATE
+// ===================================================================
+const state = {
+  kebabs: 0,
+  totalMade: 0,
+  clickPower: 1,
+  perSecond: 0,
+  prestige: 0,
+  totalClicks: 0,
+  soundOn: true,
+  theme: 'classic',
+  tempClickMultVal: 1,
+  tempClickMultUntil: 0,
+  tempCpsMultVal: 1,
+  tempCpsMultUntil: 0,
+};
+
+let currentUser = null;
+let devUnlocked = false;
+let godMode = false;
+let coopChannel = null;
+let coopCode = null;
+let coopPlayers = {};
+let coopSharedTotal = 0;
+const coopId = Math.random().toString(36).slice(2, 9);
+let coopHeartbeatTimer = null;
+
+// ===================================================================
+// DATA
+// ===================================================================
+const UPGRADES = [
+  { id: 'u1',  name: 'Lepszy szamszir',   icon: '🔪',  desc: '+1 kebab za klik',      cost: 15,         bought: false, apply: () => state.clickPower += 1 },
+  { id: 'u2',  name: 'Podwójne mięso',    icon: '🥩',  desc: '+3 kebaby za klik',     cost: 100,        bought: false, apply: () => state.clickPower += 3 },
+  { id: 'u3',  name: 'Sosik harissy',     icon: '🌶️', desc: '×2 kebaby za klik',      cost: 500,        bought: false, apply: () => state.clickPower *= 2 },
+  { id: 'u4',  name: 'Złoty szpikulec',   icon: '✨',  desc: '+10 za klik',           cost: 2000,       bought: false, apply: () => state.clickPower += 10 },
+  { id: 'u5',  name: 'Turboklik',         icon: '⚡',  desc: '×3 za klik',            cost: 10000,      bought: false, apply: () => state.clickPower *= 3 },
+  { id: 'u6',  name: 'Boskie mięso',      icon: '👼',  desc: '+50 za klik',           cost: 50000,      bought: false, apply: () => state.clickPower += 50 },
+  { id: 'u7',  name: 'Reaktor pieca',     icon: '⚙️', desc: '+200 za klik',           cost: 250000,     bought: false, apply: () => state.clickPower += 200 },
+  { id: 'u8',  name: 'Kebab kwantowy',    icon: '⚛️', desc: '×5 za klik',             cost: 1000000,    bought: false, apply: () => state.clickPower *= 5 },
+  { id: 'u9',  name: 'Szpikulec Bogów',   icon: '🏆',  desc: '+1000 za klik',         cost: 5000000,    bought: false, apply: () => state.clickPower += 1000 },
+  { id: 'u10', name: 'Nano-mięso',        icon: '🧬',  desc: '×10 za klik',           cost: 25000000,   bought: false, apply: () => state.clickPower *= 10 },
+  { id: 'u11', name: 'Kebab Singularity', icon: '🌀',  desc: '+10 000 za klik',       cost: 100000000,  bought: false, apply: () => state.clickPower += 10000 },
+  { id: 'u12', name: 'Wieczny Ogień',     icon: '♾️', desc: '×20 za klik',            cost: 500000000,  bought: false, apply: () => state.clickPower *= 20 },
+];
+
+const BUILDINGS = [
+  { id: 'b1',  name: 'Grill',                  icon: '🔥',  desc: '+0.5/s',     baseCost: 10,      owned: 0, baseCps: 0.5 },
+  { id: 'b2',  name: 'Kebabiarnia',             icon: '🏠',  desc: '+2/s',       baseCost: 80,      owned: 0, baseCps: 2 },
+  { id: 'b3',  name: 'Food Truck',              icon: '🚐',  desc: '+8/s',       baseCost: 400,     owned: 0, baseCps: 8 },
+  { id: 'b4',  name: 'Restauracja',             icon: '🏪',  desc: '+25/s',      baseCost: 2000,    owned: 0, baseCps: 25 },
+  { id: 'b5',  name: 'Fabryka',                 icon: '🏭',  desc: '+100/s',     baseCost: 10000,   owned: 0, baseCps: 100 },
+  { id: 'b6',  name: 'Kebabplex',               icon: '🌆',  desc: '+500/s',     baseCost: 60000,   owned: 0, baseCps: 500 },
+  { id: 'b7',  name: 'Metropolia Kebabowa',     icon: '🌃',  desc: '+2 500/s',   baseCost: 300000,  owned: 0, baseCps: 2500 },
+  { id: 'b8',  name: 'Kebab Corp',              icon: '🏢',  desc: '+12 000/s',  baseCost: 1500000, owned: 0, baseCps: 12000 },
+  { id: 'b9',  name: 'Orbitalna Kebabiarnia',   icon: '🛰️', desc: '+60 000/s',  baseCost: 8000000, owned: 0, baseCps: 60000 },
+  { id: 'b10', name: 'Kebab Wymiar',            icon: '🌌',  desc: '+300 000/s', baseCost: 40000000,owned: 0, baseCps: 300000 },
+];
+
+const MILESTONES = [
+  { val: 1,       label: '1 Kebab' },
+  { val: 10,      label: '10 Kebabów' },
+  { val: 100,     label: '100 Kebabów' },
+  { val: 1000,    label: '1 000' },
+  { val: 10000,   label: '10 000' },
+  { val: 100000,  label: '100 000' },
+  { val: 1e6,     label: '1 Milion' },
+  { val: 1e7,     label: '10 Milionów' },
+  { val: 1e8,     label: '100 Milionów' },
+  { val: 1e9,     label: '1 Miliard' },
+];
+
+let reachedMilestones = new Set();
+const DEV_HASH = 'b5f647d1fe31cac336dc167ba5d473d47ffc5d61a6f4409eb521c6f39dcb41bc';
+const SAVE_KEY = 'kk2_save';
+
+// ===================================================================
+// HELPERS
+// ===================================================================
+function fmt(n) {
+  if (n >= 1e12) return (n/1e12).toFixed(2) + 'T';
+  if (n >= 1e9)  return (n/1e9).toFixed(2)  + 'B';
+  if (n >= 1e6)  return (n/1e6).toFixed(2)  + 'M';
+  if (n >= 1000) return Math.floor(n).toLocaleString('pl');
+  return Math.floor(n).toString();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function sha256Hex(msg) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function buildingCost(b) {
+  return Math.ceil(b.baseCost * Math.pow(1.15, b.owned));
+}
+
+function recalcCps() {
+  state.perSecond = BUILDINGS.reduce((s, b) => s + b.baseCps * b.owned, 0);
+}
+
+function prestigeMultiplier() {
+  return 1 + state.prestige * 0.1;
+}
+
+function getCoopBonusMult() {
+  const n = Math.max(0, Object.keys(coopPlayers).length - 1);
+  return 1 + n * 0.05;
+}
+
+function getTempClickMult() {
+  return (state.tempClickMultUntil && Date.now() < state.tempClickMultUntil) ? state.tempClickMultVal : 1;
+}
+function getTempCpsMult() {
+  return (state.tempCpsMultUntil && Date.now() < state.tempCpsMultUntil) ? state.tempCpsMultVal : 1;
+}
+
+function effectiveClickPower() {
+  return state.clickPower * prestigeMultiplier() * getTempClickMult();
+}
+
+function effectiveCps() {
+  return state.perSecond * prestigeMultiplier() * getCoopBonusMult() * getTempCpsMult();
+}
+
+// ===================================================================
+// RENDER
+// ===================================================================
+function renderUpgrades() {
+  const list = document.getElementById('upgradeList');
+  list.innerHTML = '';
+  UPGRADES.forEach(u => {
+    const div = document.createElement('div');
+    div.className = 'upgrade-item' + (u.bought ? ' bought' : (state.kebabs < u.cost ? ' locked' : ''));
+    div.innerHTML = `
+      <div class="upgrade-icon">${u.icon}</div>
+      <div class="upgrade-info">
+        <div class="upgrade-name">${u.name}</div>
+        <div class="upgrade-desc">${u.desc}</div>
+      </div>
+      <div class="upgrade-cost ${u.bought ? '' : (state.kebabs < u.cost ? 'cant' : '')}">
+        ${u.bought ? '✔ Kupione' : fmt(u.cost) + ' 🌯'}
+      </div>`;
+    if (!u.bought) div.onclick = () => buyUpgrade(u);
+    list.appendChild(div);
+  });
+}
+
+function renderBuildings() {
+  const list = document.getElementById('buildingList');
+  list.innerHTML = '';
+  BUILDINGS.forEach(b => {
+    const cost = buildingCost(b);
+    const locked = state.kebabs < cost;
+    const div = document.createElement('div');
+    div.className = 'building-item' + (locked ? ' locked' : '');
+    div.innerHTML = `
+      <div class="building-icon">${b.icon}</div>
+      <div class="building-info">
+        <div class="building-name">${b.name}</div>
+        <div class="building-owned">Posiadasz: ${b.owned}</div>
+      </div>
+      <div>
+        <div class="building-cost ${locked ? 'cant' : ''}">${fmt(cost)} 🌯</div>
+      </div>`;
+    div.onclick = () => buyBuilding(b);
+    list.appendChild(div);
+  });
+}
+
+function renderMilestones() {
+  const bar = document.getElementById('milestoneBar');
+  bar.innerHTML = '';
+  MILESTONES.forEach(m => {
+    const badge = document.createElement('div');
+    badge.className = 'milestone-badge' + (reachedMilestones.has(m.val) ? ' done' : '');
+    badge.textContent = m.label;
+    bar.appendChild(badge);
+  });
+}
+
+function renderCounter() {
+  document.getElementById('counterVal').textContent = fmt(state.kebabs);
+  document.getElementById('counterPS').textContent = fmt(effectiveCps()) + ' kebabów/s';
+  document.getElementById('totalMade').textContent = fmt(state.totalMade);
+}
+
+function render() {
+  renderCounter();
+  renderUpgrades();
+  renderBuildings();
+  renderMilestones();
+}
+
+// ===================================================================
+// ACTIONS
+// ===================================================================
+function buyUpgrade(u) {
+  if (u.bought || state.kebabs < u.cost) return;
+  state.kebabs -= u.cost;
+  u.bought = true;
+  u.apply();
+  showToast('✅ Ulepszenie: ' + u.name);
+  render();
+}
+
+function buyBuilding(b) {
+  const cost = buildingCost(b);
+  if (state.kebabs < cost) return;
+  state.kebabs -= cost;
+  b.owned++;
+  recalcCps();
+  render();
+}
+
+// ===== CLICK =====
+const btn = document.getElementById('kebabBtn');
+btn.addEventListener('click', (e) => {
+  const power = effectiveClickPower();
+  state.kebabs += power;
+  state.totalMade += power;
+  state.totalClicks++;
+  checkMilestones();
+
+  btn.classList.remove('pop');
+  void btn.offsetWidth;
+  btn.classList.add('pop');
+
+  spawnFloaty(e.clientX, e.clientY, '+' + fmt(power));
+  playClickSound();
+
+  if (coopChannel) {
+    coopChannel.postMessage({ type: 'click', amount: power });
+    coopSharedTotal += power;
+    renderCoopStats();
+  }
+
+  renderCounter();
+  renderUpgrades();
+  renderBuildings();
+});
+
+function spawnFloaty(x, y, text) {
+  const el = document.createElement('div');
+  el.className = 'floaty';
+  el.textContent = text;
+  el.style.left = (x - 20 + Math.random()*30) + 'px';
+  el.style.top  = (y - 10) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+function playClickSound() {
+  if (!state.soundOn) return;
+  try {
+    const ctx = window._audioCtx || (window._audioCtx = new (window.AudioContext || window.webkitAudioContext)());
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 600 + Math.random() * 200;
+    g.gain.value = 0.05;
+    o.connect(g); g.connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + 0.07);
+  } catch(e) {}
+}
+
+// ===== MILESTONES =====
+function checkMilestones() {
+  MILESTONES.forEach(m => {
+    if (!reachedMilestones.has(m.val) && state.totalMade >= m.val) {
+      reachedMilestones.add(m.val);
+      showToast('🎉 Osiągnięcie: ' + m.label + ' kebabów!');
+      renderMilestones();
+    }
+  });
+}
+
+// ===== TOAST =====
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== TICK =====
+let last = performance.now();
+function tick(now) {
+  const dt = (now - last) / 1000;
+  last = now;
+  const cps = godMode ? Math.max(effectiveCps(), 1e9) : effectiveCps();
+  if (cps > 0) {
+    const earned = cps * dt;
+    state.kebabs += earned;
+    state.totalMade += earned;
+    checkMilestones();
+    renderCounter();
+  }
+  if (godMode && state.kebabs < 1e12) state.kebabs = 1e12;
+  requestAnimationFrame(tick);
+}
+
+// ===================================================================
+// SIDE MENU
+// ===================================================================
+const sideMenu = document.getElementById('sideMenu');
+const menuOverlay = document.getElementById('menuOverlay');
+document.getElementById('hamburgerBtn').addEventListener('click', toggleMenu);
+menuOverlay.addEventListener('click', closeMenu);
+function toggleMenu() { sideMenu.classList.toggle('open'); menuOverlay.classList.toggle('show'); }
+function closeMenu() { sideMenu.classList.remove('open'); menuOverlay.classList.remove('show'); }
+
+document.querySelectorAll('.menu-item[data-view]').forEach(b => {
+  b.addEventListener('click', () => showView(b.dataset.view));
+});
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const el = document.getElementById('view' + name.charAt(0).toUpperCase() + name.slice(1));
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.menu-item[data-view]').forEach(b => b.classList.toggle('active-item', b.dataset.view === name));
+  closeMenu();
+  if (name === 'ranking') renderRanking();
+  if (name === 'stats') renderStats();
+  if (name === 'coop') renderCoopLobby();
+  if (name === 'prestige') renderPrestige();
+  if (name === 'settings') renderSettings();
+}
+
+// ===================================================================
+// ACCOUNTS / LOGIN (local only, no real server)
+// ===================================================================
+function getAccounts() { return JSON.parse(localStorage.getItem('kk2_accounts') || '{}'); }
+function saveAccounts(a) { localStorage.setItem('kk2_accounts', JSON.stringify(a)); }
+
+function openLoginModal() {
+  document.getElementById('loginModalOverlay').classList.add('show');
+}
+function closeLoginModal() {
+  document.getElementById('loginModalOverlay').classList.remove('show');
+}
+
+async function doLogin() {
+  const u = document.getElementById('loginUsername').value.trim();
+  const p = document.getElementById('loginPassword').value;
+  if (!u || !p) { showToast('❌ Podaj nazwę i hasło'); return; }
+  if (u.length < 2) { showToast('❌ Za krótka nazwa użytkownika'); return; }
+  const accounts = getAccounts();
+  const hash = await sha256Hex(u.toLowerCase() + ':' + p);
+  if (accounts[u]) {
+    if (accounts[u] !== hash) { showToast('❌ Złe hasło'); return; }
+  } else {
+    accounts[u] = hash;
+    saveAccounts(accounts);
+  }
+  currentUser = u;
+  localStorage.setItem('kk2_session', u);
+  closeLoginModal();
+  updateUserBadge();
+  saveRankingEntry();
+  showToast('👋 Zalogowano jako ' + u);
+  renderRanking();
+}
+
+function doLogout() {
+  currentUser = null;
+  localStorage.removeItem('kk2_session');
+  updateUserBadge();
+  showToast('👋 Wylogowano');
+  renderRanking();
+  renderSettings();
+}
+
+function updateUserBadge() {
+  const badge = document.getElementById('userBadge');
+  if (currentUser) {
+    badge.innerHTML = `👤 <strong>${escapeHtml(currentUser)}</strong> <button class="logout" onclick="doLogout()">Wyloguj</button>`;
+  } else {
+    badge.innerHTML = `👤 Gość <button onclick="openLoginModal()">Zaloguj</button>`;
+  }
+}
+
+// ===================================================================
+// RANKING
+// ===================================================================
+function getRanking() { return JSON.parse(localStorage.getItem('kk2_ranking') || '{}'); }
+function saveRankingEntry() {
+  if (!currentUser) return;
+  const r = getRanking();
+  const prev = r[currentUser];
+  if (!prev || state.totalMade > prev.totalMade || state.prestige > (prev.prestige || 0)) {
+    r[currentUser] = {
+      totalMade: Math.max(state.totalMade, prev ? prev.totalMade : 0),
+      prestige: Math.max(state.prestige, prev ? (prev.prestige || 0) : 0),
+      updated: Date.now()
+    };
+    localStorage.setItem('kk2_ranking', JSON.stringify(r));
+  }
+}
+
+function renderRanking() {
+  document.getElementById('rankingLoginPrompt').style.display = currentUser ? 'none' : 'block';
+  const r = getRanking();
+  const arr = Object.entries(r).map(([name, d]) => ({ name, ...d })).sort((a, b) => b.totalMade - a.totalMade);
+  const tbody = document.getElementById('rankingBody');
+  if (!arr.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted)">Brak wyników. Zaloguj się i zagraj!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  arr.slice(0, 50).forEach((e, i) => {
+    const tr = document.createElement('tr');
+    if (e.name === currentUser) tr.classList.add('me');
+    tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml(e.name)}</td><td>${fmt(e.totalMade)}</td><td>👑 ${e.prestige || 0}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ===================================================================
+// CO-OP (BroadcastChannel — same-browser only, no internet server)
+// ===================================================================
+function coopCreateLobby() {
+  const code = Math.random().toString(36).slice(2, 7).toUpperCase();
+  joinCoopChannel(code);
+  showToast('🎉 Lobby utworzone: ' + code);
+}
+
+function coopJoinLobby(codeRaw) {
+  const code = (codeRaw || '').trim().toUpperCase();
+  if (!code) { showToast('❌ Podaj kod lobby'); return; }
+  joinCoopChannel(code);
+}
+
+function joinCoopChannel(code) {
+  if (coopChannel) leaveCoop();
+  coopCode = code;
+  coopPlayers = {};
+  coopSharedTotal = 0;
+  coopChannel = new BroadcastChannel('kk2-coop-' + code);
+  const myName = currentUser || ('Gość-' + coopId.slice(0, 4));
+  coopPlayers[coopId] = { name: myName, lastSeen: Date.now() };
+
+  coopChannel.onmessage = (ev) => {
+    const msg = ev.data;
+    if (msg.type === 'hello') {
+      if (Object.keys(coopPlayers).length >= 3 && !coopPlayers[msg.id]) {
+        coopChannel.postMessage({ type: 'full', to: msg.id });
+        return;
+      }
+      coopPlayers[msg.id] = { name: msg.name, lastSeen: Date.now() };
+      coopChannel.postMessage({ type: 'hello-ack', id: coopId, name: myName });
+      renderCoopLobby();
+    } else if (msg.type === 'hello-ack') {
+      coopPlayers[msg.id] = { name: msg.name, lastSeen: Date.now() };
+      renderCoopLobby();
+    } else if (msg.type === 'full' && msg.to === coopId) {
+      showToast('❌ Lobby pełne (max 3 graczy)');
+      leaveCoop();
+    } else if (msg.type === 'click') {
+      coopSharedTotal += msg.amount;
+      renderCoopStats();
+    } else if (msg.type === 'leave') {
+      delete coopPlayers[msg.id];
+      renderCoopLobby();
+    } else if (msg.type === 'ping') {
+      coopPlayers[msg.id] = { name: msg.name, lastSeen: Date.now() };
+    }
+  };
+
+  coopChannel.postMessage({ type: 'hello', id: coopId, name: myName });
+  document.getElementById('coopNoLobby').style.display = 'none';
+  document.getElementById('coopInLobby').style.display = 'block';
+  document.getElementById('coopCodeDisplay').textContent = code;
+  renderCoopLobby();
+  startCoopHeartbeat();
+}
+
+function leaveCoop() {
+  if (coopChannel) {
+    coopChannel.postMessage({ type: 'leave', id: coopId });
+    coopChannel.close();
+  }
+  coopChannel = null;
+  coopCode = null;
+  coopPlayers = {};
+  clearInterval(coopHeartbeatTimer);
+  document.getElementById('coopNoLobby').style.display = 'block';
+  document.getElementById('coopInLobby').style.display = 'none';
+  renderCoopLobby();
+}
+
+function startCoopHeartbeat() {
+  clearInterval(coopHeartbeatTimer);
+  coopHeartbeatTimer = setInterval(() => {
+    if (!coopChannel) return;
+    coopChannel.postMessage({ type: 'ping', id: coopId, name: currentUser || ('Gość-' + coopId.slice(0, 4)) });
+    const now = Date.now();
+    Object.keys(coopPlayers).forEach(id => {
+      if (id !== coopId && now - coopPlayers[id].lastSeen > 8000) delete coopPlayers[id];
+    });
+    renderCoopLobby();
+  }, 3000);
+}
+
+function renderCoopLobby() {
+  const list = document.getElementById('coopPlayersList');
+  if (!list) return;
+  list.innerHTML = '';
+  const players = Object.values(coopPlayers);
+  players.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'coop-player';
+    div.innerHTML = `<span class="dot"></span> <span>${escapeHtml(p.name)}</span>`;
+    list.appendChild(div);
+  });
+  for (let i = players.length; i < 3; i++) {
+    const div = document.createElement('div');
+    div.className = 'coop-slot-empty';
+    div.textContent = 'Wolne miejsce';
+    list.appendChild(div);
+  }
+  renderCoopStats();
+}
+
+function renderCoopStats() {
+  const sharedEl = document.getElementById('coopSharedVal');
+  const bonusEl = document.getElementById('coopBonusVal');
+  if (sharedEl) sharedEl.textContent = fmt(coopSharedTotal);
+  if (bonusEl) bonusEl.textContent = '+' + Math.round((getCoopBonusMult() - 1) * 100) + '%';
+}
+
+// ===================================================================
+// PRESTIGE
+// ===================================================================
+function doPrestige() {
+  if (state.totalMade < 1e6) { showToast('❌ Potrzebujesz min. 1 000 000 wyprodukowanych kebabów'); return; }
+  const gain = Math.floor(Math.sqrt(state.totalMade / 1e6));
+  if (gain < 1) { showToast('❌ Za mało punktów prestiżu do zdobycia'); return; }
+  if (!confirm('Odrodzisz się i zdobędziesz ' + gain + ' 👑 Punktów Prestiżu (+' + (gain*10) + '% do produkcji na zawsze). Stracisz kebaby, ulepszenia i budynki. Kontynuować?')) return;
+  state.prestige += gain;
+  state.kebabs = 0;
+  state.totalMade = 0;
+  state.clickPower = 1;
+  UPGRADES.forEach(u => u.bought = false);
+  BUILDINGS.forEach(b => b.owned = 0);
+  recalcCps();
+  reachedMilestones.clear();
+  render();
+  renderPrestige();
+  saveRankingEntry();
+  showToast('👑 Odrodzenie! +' + gain + ' Punktów Prestiżu');
+}
+
+function renderPrestige() {
+  const potential = state.totalMade >= 1e6 ? Math.floor(Math.sqrt(state.totalMade / 1e6)) : 0;
+  document.getElementById('prestigeCurrent').textContent = state.prestige;
+  document.getElementById('prestigeMult').textContent = '+' + (state.prestige * 10) + '%';
+  document.getElementById('prestigePotential').textContent = potential;
+}
+
+// ===================================================================
+// STATS / ACHIEVEMENTS
+// ===================================================================
+function computeAchievements() {
+  return [
+    { done: UPGRADES.every(u => u.bought), label: 'Wszystkie ulepszenia kupione' },
+    { done: BUILDINGS.every(b => b.owned >= 10), label: '10x każdy budynek' },
+    { done: state.prestige >= 1, label: 'Pierwsze odrodzenie' },
+    { done: state.totalClicks >= 1000, label: '1000 kliknięć' },
+    { done: state.totalClicks >= 10000, label: '10 000 kliknięć' },
+    { done: !!coopChannel, label: 'Dołączono do trybu Co-op' },
+    { done: !!currentUser, label: 'Zalogowano na konto' },
+    { done: state.totalMade >= 1e9, label: '1 miliard kebabów łącznie' },
+  ];
+}
+
+function renderStats() {
+  const grid = document.getElementById('statGrid');
+  grid.innerHTML = `
+    <div class="stat-box"><div class="val">${fmt(state.kebabs)}</div><div class="lbl">Kebaby teraz</div></div>
+    <div class="stat-box"><div class="val">${fmt(state.totalMade)}</div><div class="lbl">Łącznie wyprodukowano</div></div>
+    <div class="stat-box"><div class="val">${state.totalClicks.toLocaleString('pl')}</div><div class="lbl">Kliknięć</div></div>
+    <div class="stat-box"><div class="val">${fmt(effectiveClickPower())}</div><div class="lbl">Siła kliknięcia</div></div>
+    <div class="stat-box"><div class="val">${fmt(effectiveCps())}</div><div class="lbl">Kebaby / s</div></div>
+    <div class="stat-box"><div class="val">👑 ${state.prestige}</div><div class="lbl">Prestiż</div></div>
+    <div class="stat-box"><div class="val">${currentUser ? escapeHtml(currentUser) : 'Gość'}</div><div class="lbl">Konto</div></div>
+  `;
+  const ach = document.getElementById('achList');
+  ach.innerHTML = '';
+  computeAchievements().forEach(a => {
+    const span = document.createElement('span');
+    span.className = 'ach-badge ' + (a.done ? 'done' : 'pending');
+    span.textContent = (a.done ? '✔ ' : '🔒 ') + a.label;
+    ach.appendChild(span);
+  });
+}
+
+// ===================================================================
+// SETTINGS
+// ===================================================================
+const THEMES = {
+  classic: { accent: '#ff6b00', accent2: '#ffbe00' },
+  matcha:  { accent: '#4caf50', accent2: '#b2ff59' },
+  neon:    { accent: '#a020f0', accent2: '#ff2fd0' },
+};
+
+function applyTheme(name) {
+  const t = THEMES[name] || THEMES.classic;
+  document.documentElement.style.setProperty('--accent', t.accent);
+  document.documentElement.style.setProperty('--accent2', t.accent2);
+  state.theme = name;
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active-theme', b.dataset.theme === name));
+}
+
+document.querySelectorAll('.theme-btn').forEach(b => {
+  b.addEventListener('click', () => applyTheme(b.dataset.theme));
+});
+
+document.getElementById('soundToggle').addEventListener('change', (e) => {
+  state.soundOn = e.target.checked;
+});
+
+function renderSettings() {
+  document.getElementById('soundToggle').checked = state.soundOn;
+  const box = document.getElementById('settingsAccountBox');
+  if (currentUser) {
+    box.innerHTML = `<p style="margin-bottom:10px;">Zalogowano jako <strong style="color:var(--accent2)">${escapeHtml(currentUser)}</strong></p><button class="btn-secondary" onclick="doLogout()">Wyloguj</button>`;
+  } else {
+    box.innerHTML = `<p style="margin-bottom:10px; color:var(--muted);">Nie jesteś zalogowany.</p><button class="btn-primary" onclick="openLoginModal()">Zaloguj się</button>`;
+  }
+}
+
+// ===== EXPORT / IMPORT =====
+function exportSave() {
+  const data = buildSaveData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'kebab-klikacz-2-zapis.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('⬇️ Zapis wyeksportowany');
+}
+
+document.getElementById('importFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      applySaveData(data);
+      render();
+      renderPrestige();
+      renderStats();
+      renderSettings();
+      showToast('📂 Zapis zaimportowany');
+    } catch (err) {
+      showToast('❌ Nieprawidłowy plik zapisu');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ===================================================================
+// DEV PANEL
+// ===================================================================
+document.getElementById('devMenuBtn').addEventListener('click', () => {
+  closeMenu();
+  if (devUnlocked) {
+    openDevPanel();
+  } else {
+    document.getElementById('devPasswordOverlay').classList.add('show');
+  }
+});
+
+function closeDevPasswordModal() {
+  document.getElementById('devPasswordOverlay').classList.remove('show');
+  document.getElementById('devPasswordInput').value = '';
+}
+
+async function checkDevPassword() {
+  const val = document.getElementById('devPasswordInput').value;
+  const hash = await sha256Hex(val);
+  if (hash === DEV_HASH) {
+    devUnlocked = true;
+    closeDevPasswordModal();
+    openDevPanel();
+    showToast('🔓 Dev Panel odblokowany');
+  } else {
+    showToast('❌ Błędne hasło');
+  }
+}
+
+function openDevPanel() {
+  devRefreshJson();
+  document.getElementById('devPanelOverlay').classList.add('show');
+}
+function closeDevPanel() {
+  document.getElementById('devPanelOverlay').classList.remove('show');
+}
+
+function devSetKebabs() {
+  const v = parseFloat(document.getElementById('devKebabsInput').value);
+  if (isNaN(v)) return;
+  state.kebabs = v;
+  state.totalMade = Math.max(state.totalMade, v);
+  render(); devRefreshJson();
+  showToast('🔧 Ustawiono kebaby: ' + fmt(v));
+}
+function devSetClickPower() {
+  const v = parseFloat(document.getElementById('devClickInput').value);
+  if (isNaN(v)) return;
+  state.clickPower = v;
+  render(); devRefreshJson();
+  showToast('🔧 Ustawiono siłę kliknięcia: ' + fmt(v));
+}
+function devAddMillion() {
+  state.kebabs += 1000000;
+  state.totalMade += 1000000;
+  render(); devRefreshJson();
+  showToast('🔧 +1 000 000 kebabów');
+}
+function devUnlockAll() {
+  UPGRADES.forEach(u => { if (!u.bought) { u.bought = true; u.apply(); } });
+  BUILDINGS.forEach(b => { b.owned = Math.max(b.owned, 50); });
+  recalcCps();
+  render(); devRefreshJson();
+  showToast('🔧 Odblokowano wszystko');
+}
+function devAddPrestige() {
+  state.prestige += 10;
+  renderPrestige(); devRefreshJson();
+  showToast('🔧 +10 Prestiżu');
+}
+function devToggleGod() {
+  godMode = !godMode;
+  document.getElementById('devGodModeBtn').textContent = '♾️ Tryb boga: ' + (godMode ? 'ON' : 'OFF');
+  showToast('🔧 Tryb boga: ' + (godMode ? 'włączony' : 'wyłączony'));
+}
+function devResetAchievements() {
+  reachedMilestones.clear();
+  renderMilestones(); devRefreshJson();
+  showToast('🔧 Zresetowano osiągnięcia');
+}
+function devRefreshJson() {
+  document.getElementById('devJsonView').value = JSON.stringify(buildSaveData(), null, 2);
+}
+
+// ===================================================================
+// SAVE / LOAD
+// ===================================================================
+function buildSaveData() {
+  return {
+    kebabs: state.kebabs,
+    totalMade: state.totalMade,
+    clickPower: state.clickPower,
+    prestige: state.prestige,
+    totalClicks: state.totalClicks,
+    soundOn: state.soundOn,
+    theme: state.theme,
+    upgrades: UPGRADES.map(u => ({ id: u.id, bought: u.bought })),
+    buildings: BUILDINGS.map(b => ({ id: b.id, owned: b.owned })),
+    milestones: [...reachedMilestones],
+    lastSave: Date.now(),
+    user: currentUser,
+  };
+}
+
+function applySaveData(data) {
+  state.clickPower = 1;
+  UPGRADES.forEach(u => u.bought = false);
+  BUILDINGS.forEach(b => b.owned = 0);
+
+  state.kebabs = data.kebabs || 0;
+  state.totalMade = data.totalMade || 0;
+  state.prestige = data.prestige || 0;
+  state.totalClicks = data.totalClicks || 0;
+  state.soundOn = data.soundOn !== undefined ? data.soundOn : true;
+  applyTheme(data.theme || 'classic');
+  reachedMilestones = new Set(data.milestones || []);
+
+  (data.upgrades || []).forEach(saved => {
+    if (saved.bought) {
+      const u = UPGRADES.find(x => x.id === saved.id);
+      if (u && !u.bought) { u.bought = true; u.apply(); }
+    }
+  });
+  (data.buildings || []).forEach(saved => {
+    const b = BUILDINGS.find(x => x.id === saved.id);
+    if (b) b.owned = saved.owned || 0;
+  });
+
+  // dev-panel style manual clickPower override (only if no upgrades explain the value)
+  if (UPGRADES.every(u => !u.bought) && data.clickPower) state.clickPower = data.clickPower;
+
+  recalcCps();
+  return data.lastSave || null;
+}
+
+function saveGame() {
+  const data = buildSaveData();
+  localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  saveRankingEntry();
+  showToast('💾 Gra zapisana!');
+}
+
+function loadGame() {
+  const raw = localStorage.getItem(SAVE_KEY);
+  if (!raw) { showToast('❌ Brak zapisu!'); return; }
+  try {
+    const data = JSON.parse(raw);
+    applySaveData(data);
+    render();
+    renderPrestige();
+    renderStats();
+    renderSettings();
+    showToast('📂 Wczytano zapis!');
+  } catch (e) { showToast('❌ Błąd wczytywania!'); }
+}
+
+function resetGame() {
+  if (!confirm('Na pewno chcesz zresetować grę? Stracisz wszystko!')) return;
+  localStorage.removeItem(SAVE_KEY);
+  location.reload();
+}
+
+// autosave co 30s
+setInterval(saveGame, 30000);
+
+// ===================================================================
+// OFFLINE EARNINGS
+// ===================================================================
+function closeOfflineModal() {
+  document.getElementById('offlineModalOverlay').classList.remove('show');
+}
+
+function grantOfflineEarnings(lastSave) {
+  if (!lastSave) return;
+  const elapsedSec = Math.min((Date.now() - lastSave) / 1000, 8 * 3600); // cap 8h
+  if (elapsedSec < 30) return; // not worth showing for short gaps
+  const earned = effectiveCps() * elapsedSec * 0.5; // 50% offline efficiency
+  if (earned <= 0) return;
+  state.kebabs += earned;
+  state.totalMade += earned;
+  const hrs = (elapsedSec / 3600).toFixed(1);
+  document.getElementById('offlineText').textContent =
+    `Byłeś offline przez ok. ${hrs} h. Twoje budynki upiekły w tym czasie ${fmt(earned)} 🌯 kebabów (50% wydajności offline)!`;
+  document.getElementById('offlineModalOverlay').classList.add('show');
+}
+
+// ===================================================================
+// EVENTY: Złoty Kebab, deszcz kebabów, konfetti, odznaka buffów
+// ===================================================================
+function activateBuff(kind, mult, seconds, msg) {
+  if (kind === 'click') {
+    state.tempClickMultVal = mult;
+    state.tempClickMultUntil = Date.now() + seconds * 1000;
+  } else {
+    state.tempCpsMultVal = mult;
+    state.tempCpsMultUntil = Date.now() + seconds * 1000;
+  }
+  showToast(msg);
+  updateBuffBadge();
+}
+
+function updateBuffBadge() {
+  const badge = document.getElementById('buffBadge');
+  if (!badge) return;
+  const parts = [];
+  if (state.tempClickMultUntil && Date.now() < state.tempClickMultUntil) {
+    parts.push('⚡ Klik ×' + state.tempClickMultVal + ': ' + Math.ceil((state.tempClickMultUntil - Date.now()) / 1000) + 's');
+  }
+  if (state.tempCpsMultUntil && Date.now() < state.tempCpsMultUntil) {
+    parts.push('🚀 Produkcja ×' + state.tempCpsMultVal + ': ' + Math.ceil((state.tempCpsMultUntil - Date.now()) / 1000) + 's');
+  }
+  if (parts.length) {
+    badge.textContent = parts.join('  |  ');
+    badge.classList.add('show');
+  } else {
+    badge.classList.remove('show');
+  }
+}
+setInterval(updateBuffBadge, 500);
+
+function spawnConfetti(x, y) {
+  const emojis = ['✨', '🎉', '🌟', '🥳', '🌯'];
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-particle';
+    p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 40 + Math.random() * 70;
+    p.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 900);
+  }
+}
+
+function spawnFallingKebab() {
+  const el = document.createElement('button');
+  el.className = 'falling-kebab';
+  el.textContent = '🌯';
+  const x = 20 + Math.random() * (window.innerWidth - 40);
+  el.style.left = x + 'px';
+  el.style.top = '-40px';
+  const duration = 3 + Math.random() * 2.5;
+  el.style.animationDuration = duration + 's';
+  let done = false;
+  el.addEventListener('click', (e) => {
+    if (done) return;
+    done = true;
+    const bonus = Math.max(5, effectiveClickPower() * 3);
+    state.kebabs += bonus;
+    state.totalMade += bonus;
+    checkMilestones();
+    spawnFloaty(e.clientX, e.clientY, '+' + fmt(bonus));
+    playClickSound();
+    el.remove();
+    renderCounter(); renderUpgrades(); renderBuildings();
+  });
+  document.body.appendChild(el);
+  setTimeout(() => { if (!done && el.parentNode) el.parentNode.removeChild(el); }, duration * 1000 + 150);
+}
+
+function spawnKebabRain() {
+  const count = 10;
+  for (let i = 0; i < count; i++) {
+    setTimeout(spawnFallingKebab, i * 150);
+  }
+}
+
+function goldenKebabReward(x, y) {
+  spawnConfetti(x, y);
+  const roll = Math.random();
+  if (roll < 0.35) {
+    const bonus = Math.max(50, state.kebabs * 0.15 + effectiveCps() * 30 + effectiveClickPower() * 20);
+    state.kebabs += bonus;
+    state.totalMade += bonus;
+    checkMilestones();
+    showToast('🌟 Złoty Kebab! +' + fmt(bonus) + ' kebabów!');
+    renderCounter(); renderUpgrades(); renderBuildings();
+  } else if (roll < 0.65) {
+    activateBuff('click', 7, 15, '⚡ Szał kliknięć! Siła klikania ×7 przez 15s!');
+  } else if (roll < 0.9) {
+    activateBuff('cps', 3, 25, '🚀 Produkcja ×3 przez 25s!');
+  } else {
+    showToast('🌧️ Deszcz kebabów! Łap je!');
+    spawnKebabRain();
+  }
+}
+
+function spawnGoldenKebab() {
+  const el = document.createElement('button');
+  el.className = 'golden-kebab';
+  el.textContent = '🌟🌯';
+  el.title = 'Kliknij mnie!';
+  const margin = 60;
+  const x = margin + Math.random() * Math.max(1, window.innerWidth - margin * 2);
+  const y = 130 + Math.random() * Math.max(1, window.innerHeight - 260);
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+
+  let done = false;
+  function finish() {
+    if (done) return;
+    done = true;
+    if (el.parentNode) el.parentNode.removeChild(el);
+    scheduleGoldenKebab();
+  }
+  el.addEventListener('click', (e) => {
+    if (done) return;
+    goldenKebabReward(e.clientX, e.clientY);
+    finish();
+  });
+  document.body.appendChild(el);
+  setTimeout(finish, 12000);
+}
+
+function scheduleGoldenKebab() {
+  const delay = 25000 + Math.random() * 35000; // 25-60s
+  setTimeout(spawnGoldenKebab, delay);
+}
+
+// ===================================================================
+// INIT
+// ===================================================================
+(function init() {
+  const raw = localStorage.getItem(SAVE_KEY);
+  let lastSave = null;
+  if (raw) {
+    try {
+      const data = JSON.parse(raw);
+      lastSave = applySaveData(data);
+    } catch (e) {}
+  } else {
+    applyTheme('classic');
+  }
+
+  const session = localStorage.getItem('kk2_session');
+  if (session) currentUser = session;
+  updateUserBadge();
+
+  render();
+  renderPrestige();
+  renderStats();
+  renderSettings();
+
+  if (lastSave) grantOfflineEarnings(lastSave);
+
+  scheduleGoldenKebab();
+  requestAnimationFrame(ts => { last = ts; tick(ts); });
+})();
+</script>
+
+</body></html>
